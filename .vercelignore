@@ -1,0 +1,14 @@
+code/model/training_data.csv
+code/frontend/node_modules
+code/frontend/.next
+code/backend/.venv
+__pycache__
+.git
+.vscode
+.cursor
+REPORT.md
+README.md
+*.pkl
+!code/model/surrogate_model.pkl
+!code/model/scaler.pkl
+
