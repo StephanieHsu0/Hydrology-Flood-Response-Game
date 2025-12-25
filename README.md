@@ -2,7 +2,7 @@
 
 Hydrology-inspired **serious game** for **flood response decision-making** with an **AI advisor** (ML surrogate transition + **CVaR** risk-sensitive recommendation).
 
-**GitHub repository:** `https://github.com/StephanieHsu0/Hydrology-Flood-Response-Game`
+**GitHub repository:** `https://github.com/StephanieHsu0/Hydrology-Flood-Response-Game`  
 **Live demo (Vercel):** `https://hydrology-flood-response-game.vercel.app/`
 
 中文正式名稱：**城市指揮官：洪水應變 (City Commander: Flood Response)**  
