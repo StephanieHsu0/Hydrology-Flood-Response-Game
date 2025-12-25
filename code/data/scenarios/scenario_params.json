@@ -1,0 +1,80 @@
+[
+  {
+    "id": "weak_drizzle",
+    "name": { "zh": "城市指揮官：細雨演練", "en": "City Commander: Weak Drizzle" },
+    "csv": "weak.csv",
+    "description": { 
+      "zh": "降雨強度極低，適合作為指揮官的初步行政操作與預算配置練習。", 
+      "en": "Light intermittent rainfall, good for commander orientation and low-risk budget management." 
+    },
+    "time_step_hr": 1,
+    "params": {
+      "initial_budget": 50.0,
+      "zones": {
+        "industrial": { "a": 0.9, "b": 0.08, "c": 0.6, "threshold": 2.5, "damage_scale": 15.0 },
+        "residential": { "a": 0.88, "b": 0.06, "c": 0.4, "threshold": 2.0, "damage_scale": 10.0 },
+        "lowland": { "a": 0.85, "b": 0.1, "c": 0.3, "threshold": 1.5, "damage_scale": 5.0 }
+      }
+    },
+    "actions": {
+      "none": { "cost": 0.0, "effect": 0.0 },
+      "alert": { "cost": 1.0, "effect": 0.12 },
+      "pump": { "cost": 3.0, "effect": 0.4 },
+      "diversion": { "cost": 8.0, "effect": 0.8 },
+      "evac": { "cost": 15.0, "effect": 1.5 },
+      "funding": { "cost": 10.0, "effect": 30.0 }
+    }
+  },
+  {
+    "id": "city_commander_basic",
+    "name": { "zh": "城市指揮官：初次風暴", "en": "City Commander: First Storm" },
+    "csv": "medium.csv",
+    "description": { 
+      "zh": "在溫和的多峰降雨中保護三區。工業區產值高但排水慢，請謹慎分配預算。", 
+      "en": "Protect the Tri-Zone area from a moderate multi-peak storm. Manage your budget carefully." 
+    },
+    "time_step_hr": 1,
+    "params": {
+      "initial_budget": 100.0,
+      "zones": {
+        "industrial": { "a": 0.88, "b": 0.1, "c": 0.7, "threshold": 2.5, "damage_scale": 25.0 },
+        "residential": { "a": 0.85, "b": 0.08, "c": 0.5, "threshold": 2.0, "damage_scale": 15.0 },
+        "lowland": { "a": 0.82, "b": 0.12, "c": 0.4, "threshold": 1.5, "damage_scale": 8.0 }
+      }
+    },
+    "actions": {
+      "none": { "cost": 0.0, "effect": 0.0 },
+      "alert": { "cost": 1.5, "effect": 0.15 },
+      "pump": { "cost": 5.0, "effect": 0.6 },
+      "diversion": { "cost": 12.0, "effect": 1.2 },
+      "evac": { "cost": 25.0, "effect": 2.0 },
+      "funding": { "cost": 10.0, "effect": 30.0 }
+    }
+  },
+  {
+    "id": "city_commander_typhoon",
+    "name": { "zh": "城市指揮官：強烈颱風", "en": "City Commander: Typhoon Peak" },
+    "csv": "strong.csv",
+    "description": { 
+      "zh": "極高強度的短時強降雨。工業區面臨失守風險，必須果斷採取大規模應變。", 
+      "en": "A sharp, high-intensity burst. High risk of industrial flooding. Strategic resource allocation is key." 
+    },
+    "time_step_hr": 1,
+    "params": {
+      "initial_budget": 150.0,
+      "zones": {
+        "industrial": { "a": 0.86, "b": 0.12, "c": 0.8, "threshold": 2.2, "damage_scale": 35.0 },
+        "residential": { "a": 0.84, "b": 0.1, "c": 0.6, "threshold": 1.8, "damage_scale": 20.0 },
+        "lowland": { "a": 0.8, "b": 0.15, "c": 0.5, "threshold": 1.2, "damage_scale": 12.0 }
+      }
+    },
+    "actions": {
+      "none": { "cost": 0.0, "effect": 0.0 },
+      "alert": { "cost": 2.0, "effect": 0.2 },
+      "pump": { "cost": 7.0, "effect": 0.8 },
+      "diversion": { "cost": 18.0, "effect": 1.5 },
+      "evac": { "cost": 35.0, "effect": 2.5 },
+      "funding": { "cost": 10.0, "effect": 30.0 }
+    }
+  }
+]
