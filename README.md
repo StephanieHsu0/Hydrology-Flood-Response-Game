@@ -3,6 +3,7 @@
 Hydrology-inspired **serious game** for **flood response decision-making** with an **AI advisor** (ML surrogate transition + **CVaR** risk-sensitive recommendation).
 
 **GitHub repository:** `https://github.com/StephanieHsu0/Hydrology-Flood-Response-Game`
+**Live demo (Vercel):** `https://hydrology-flood-response-game.vercel.app/`
 
 中文正式名稱：**城市指揮官：洪水應變 (City Commander: Flood Response)**  
 定位：玩家扮演城市應變指揮官，在 **24 小時降雨事件**中進行資源配置與區域決策，目標是在有限預算下把損害降到最低並維持民眾信任。
