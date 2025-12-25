@@ -1,22 +1,31 @@
 import sys
-import os
 from pathlib import Path
 
-# Flexible path finding to work regardless of Vercel Root Directory setting
-current_file = Path(__file__).resolve()
-# Try to find the 'code' directory starting from current location and moving up
-repo_root = current_file.parents[1] # Default: api/../
-if not (repo_root / "code").exists():
-    repo_root = current_file.parents[2] # api/../../
 
-backend_path = repo_root / "code" / "backend"
+def find_code_dir(start: Path) -> Path:
+    """
+    Find the repository's `code/` directory by walking upwards from `start`.
+    We detect it by the presence of:
+      - backend/app/main.py
+      - data/scenarios/
+    """
+    for p in [start] + list(start.parents):
+        # Case A: we're already inside the `code/` directory
+        if (p / "backend" / "app" / "main.py").exists() and (p / "data" / "scenarios").exists():
+            return p
+        # Case B: we're at repo root and `code/` is a subdirectory
+        if (p / "code" / "backend" / "app" / "main.py").exists() and (p / "code" / "data" / "scenarios").exists():
+            return p / "code"
+    raise RuntimeError(f"Could not locate code/ directory starting from {start}")
 
-if backend_path.exists():
-    sys.path.append(str(backend_path))
-    print(f"Added backend path: {backend_path}")
-else:
-    print(f"CRITICAL: Backend path not found at {backend_path}")
 
-from app.main import app
+CURRENT_FILE = Path(__file__).resolve()
+CODE_DIR = find_code_dir(CURRENT_FILE.parent)
+BACKEND_PATH = CODE_DIR / "backend"
 
+sys.path.insert(0, str(BACKEND_PATH))
+
+from app.main import app  # noqa: E402
+
+# Vercel Python expects `handler`
 handler = app

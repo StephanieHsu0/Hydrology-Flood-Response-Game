@@ -9,6 +9,8 @@ import numpy as np
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
+import os
+import sys
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,22 +22,21 @@ logger = logging.getLogger(__name__)
 
 # Absolute path handling for Vercel vs Local
 # main.py is in code/backend/app/main.py
-# We want the root of 'code/' where 'data/' and 'model/' are siblings of 'backend/'
-CURRENT_DIR = Path(__file__).resolve().parent
-BASE_DIR = CURRENT_DIR.parents[1] # This should be the 'code' directory
+# We want the root of `code/` where `data/` and `model/` are siblings of `backend/`.
+CODE_DIR = Path(__file__).resolve().parents[2]  # .../code
 
-SCENARIO_DIR = BASE_DIR / "data" / "scenarios"
+SCENARIO_DIR = CODE_DIR / "data" / "scenarios"
 PARAM_FILE = SCENARIO_DIR / "scenario_params.json"
-MODEL_DIR = BASE_DIR / "model"
+MODEL_DIR = CODE_DIR / "model"
 
-logger.info(f"Paths initialized: BASE_DIR={BASE_DIR}, SCENARIO_DIR={SCENARIO_DIR}")
+logger.info(f"Paths initialized: CODE_DIR={CODE_DIR}, SCENARIO_DIR={SCENARIO_DIR}, MODEL_DIR={MODEL_DIR}")
 
 # Load ML Surrogate Model Parameters (Numpy-only inference to stay under Vercel 250MB limit)
 ML_PARAMS = {}
 try:
     possible_weights = [
         MODEL_DIR / "model_weights.npz",
-        BASE_DIR.parent / "model" / "model_weights.npz",
+        CODE_DIR.parent / "model" / "model_weights.npz",
         Path("/var/task/code/model/model_weights.npz")
     ]
     
@@ -644,7 +645,7 @@ def replay_api(game_id: str):
 @app.get("/api/debug")
 def debug_info():
     return {
-        "base_dir": str(BASE_DIR),
+        "code_dir": str(CODE_DIR),
         "param_file": str(PARAM_FILE),
         "param_file_exists": PARAM_FILE.exists(),
         "model_dir": str(MODEL_DIR),
