@@ -24,6 +24,11 @@ SCENARIO_DIR = BASE_DIR / "data" / "scenarios"
 PARAM_FILE = SCENARIO_DIR / "scenario_params.json"
 MODEL_DIR = BASE_DIR / "code" / "model"
 
+# If deployed in an environment where `code/` is not part of the working directory layout,
+# fall back to `<base>/model` (keeps local dev and serverless deployments compatible).
+if not MODEL_DIR.exists():
+    MODEL_DIR = BASE_DIR / "model"
+
 # Load ML Surrogate Model
 try:
     SURROGATE_MODEL = joblib.load(MODEL_DIR / "surrogate_model.pkl")
@@ -577,6 +582,10 @@ class GameSession:
 
 app = FastAPI(title="Flood Commander API", version="0.2.3")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+
+@app.get("/")
+def read_root():
+    return {"status": "online", "message": "Flood Commander API is running. Visit port 3001 for the game UI."}
 
 SCENARIOS = load_scenarios()
 RAINFALL: Dict[str, List[float]] = {sid: load_rain_series(spec.csv) for sid, spec in SCENARIOS.items()}

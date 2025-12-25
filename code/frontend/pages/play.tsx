@@ -164,10 +164,17 @@ export default function Play() {
     try {
       if (reasonStr.startsWith("{")) {
         const parsed = JSON.parse(reasonStr);
-        const actionKey = current?.recommendation.action || "none";
-        const langKey = lang as string; // Explicit cast
+        const langKey = lang as string;
         const langData = parsed[langKey] || parsed["en"];
-        return langData[actionKey] || reasonStr;
+        
+        // Return a combined string of the XAI details
+        return (
+          <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+            <div style={{ fontWeight: 600, color: "#f8fafc" }}>{langData.summary}</div>
+            <div style={{ fontSize: "12px" }}>{langData.risk_focus}</div>
+            <div style={{ fontSize: "12px", fontStyle: "italic", color: "#94a3b8" }}>{langData.budget_note}</div>
+          </div>
+        );
       }
       return reasonStr;
     } catch (e) {
