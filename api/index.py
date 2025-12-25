@@ -27,5 +27,6 @@ sys.path.insert(0, str(BACKEND_PATH))
 
 from app.main import app  # noqa: E402
 
-# Vercel Python expects `handler`
-handler = app
+# Vercel Python runtime expects an ASGI app exposed as `app`
+# (rewrites in vercel.json send /api/* here).
+app = app
