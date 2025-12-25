@@ -18,39 +18,40 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+# Absolute path handling for Vercel vs Local
+# main.py is in code/backend/app/main.py
+# We want the root of 'code/' where 'data/' and 'model/' are siblings of 'backend/'
+CURRENT_DIR = Path(__file__).resolve().parent
+BASE_DIR = CURRENT_DIR.parents[1] # This should be the 'code' directory
+
 SCENARIO_DIR = BASE_DIR / "data" / "scenarios"
 PARAM_FILE = SCENARIO_DIR / "scenario_params.json"
-MODEL_DIR = BASE_DIR / "code" / "model"
+MODEL_DIR = BASE_DIR / "model"
 
-# If deployed in an environment where `code/` is not part of the working directory layout,
-# fall back to `<base>/model` (keeps local dev and serverless deployments compatible).
-if not MODEL_DIR.exists():
-    MODEL_DIR = BASE_DIR / "model"
+logger.info(f"Paths initialized: BASE_DIR={BASE_DIR}, SCENARIO_DIR={SCENARIO_DIR}")
 
 # Load ML Surrogate Model Parameters (Numpy-only inference to stay under Vercel 250MB limit)
 ML_PARAMS = {}
 try:
-    possible_dirs = [
-        MODEL_DIR,
-        BASE_DIR / "model",
-        Path(__file__).resolve().parents[3] / "code" / "model",
-        Path("/var/task/code/model") # Vercel specific
+    possible_weights = [
+        MODEL_DIR / "model_weights.npz",
+        BASE_DIR.parent / "model" / "model_weights.npz",
+        Path("/var/task/code/model/model_weights.npz")
     ]
     
     weights_path = None
-    for d in possible_dirs:
-        if (d / "model_weights.npz").exists():
-            weights_path = d / "model_weights.npz"
+    for p in possible_weights:
+        if p.exists():
+            weights_path = p
             logger.info(f"Found weights at {weights_path}")
             break
             
     if weights_path:
-        with np.load(weights_path) as data:
+        with np.load(weights_path, allow_pickle=True) as data:
             ML_PARAMS = {k: data[k] for k in data.files}
         logger.info("ML weights loaded successfully.")
     else:
-        logger.warning("No ML weights found. Falling back to formula.")
+        logger.warning(f"No ML weights found at searched paths: {possible_weights}. Falling back to formula.")
 except Exception as e:
     logger.error(f"Failed to load ML weights: {e}")
 
@@ -639,6 +640,18 @@ def step_game_api(req: StepRequest):
 @app.get("/api/replay/{game_id}")
 def replay_api(game_id: str):
     return replay(game_id)
+
+@app.get("/api/debug")
+def debug_info():
+    return {
+        "base_dir": str(BASE_DIR),
+        "param_file": str(PARAM_FILE),
+        "param_file_exists": PARAM_FILE.exists(),
+        "model_dir": str(MODEL_DIR),
+        "weights_loaded": len(ML_PARAMS) > 0,
+        "python_version": sys.version,
+        "cwd": os.getcwd()
+    }
 
 SCENARIOS = load_scenarios()
 RAINFALL: Dict[str, List[float]] = {sid: load_rain_series(spec.csv) for sid, spec in SCENARIOS.items()}
