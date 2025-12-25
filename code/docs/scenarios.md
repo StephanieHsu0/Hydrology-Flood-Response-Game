@@ -24,3 +24,5 @@ Key params:
 - Keep action dictionaries aligned across scenarios for frontend simplicity.
 - For real data, drop CSVs with `timestamp,rain_mm` and tune params to match basin behavior.
 
+
+

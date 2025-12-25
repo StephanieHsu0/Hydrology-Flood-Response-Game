@@ -8,6 +8,8 @@ current_file = Path(__file__).resolve()
 repo_root = current_file.parents[1] # Default: api/../
 if not (repo_root / "code").exists():
     repo_root = current_file.parents[2] # api/../../
+if not (repo_root / "code").exists():
+    repo_root = current_file.parents[3] # api/../../../
 
 backend_path = repo_root / "code" / "backend"
 

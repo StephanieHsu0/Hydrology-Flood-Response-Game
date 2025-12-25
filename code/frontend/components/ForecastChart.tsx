@@ -51,3 +51,5 @@ export function ForecastChart({ forecast }: Props) {
   return <Line data={data} options={options} />;
 }
 
+
+

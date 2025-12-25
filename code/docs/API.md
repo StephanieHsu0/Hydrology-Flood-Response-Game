@@ -54,3 +54,5 @@ Returns full `history` (list of `StepResponse`) for analysis/replay.
 - Reward delta: `-(damage + action_cost)` (higher is better)
 - Uncertainty: Monte Carlo perturbation of rain (±10%) over 3-step horizon, returning mean/std.
 
+
+

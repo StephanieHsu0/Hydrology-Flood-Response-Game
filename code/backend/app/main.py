@@ -31,9 +31,32 @@ if not MODEL_DIR.exists():
 
 # Load ML Surrogate Model
 try:
-    SURROGATE_MODEL = joblib.load(MODEL_DIR / "surrogate_model.pkl")
-    SCALER = joblib.load(MODEL_DIR / "scaler.pkl")
-    logger.info("ML Surrogate Model loaded successfully.")
+    # Try multiple possible locations for model files to support both local and Vercel environments
+    possible_dirs = [
+        MODEL_DIR,
+        BASE_DIR / "model",
+        Path(__file__).resolve().parents[3] / "code" / "model",
+        Path("/var/task/code/model") # Vercel specific
+    ]
+    
+    model_path = None
+    scaler_path = None
+    
+    for d in possible_dirs:
+        if (d / "surrogate_model.pkl").exists():
+            model_path = d / "surrogate_model.pkl"
+            scaler_path = d / "scaler.pkl"
+            logger.info(f"Found model at {d}")
+            break
+            
+    if model_path:
+        SURROGATE_MODEL = joblib.load(model_path)
+        SCALER = joblib.load(scaler_path)
+        logger.info("ML Surrogate Model loaded successfully.")
+    else:
+        logger.warning("No ML model artifacts found. Falling back to formula.")
+        SURROGATE_MODEL = None
+        SCALER = None
 except Exception as e:
     logger.error(f"Failed to load ML model: {e}")
     SURROGATE_MODEL = None
@@ -514,7 +537,7 @@ class GameSession:
             cvar, mean_loss, losses, zone_dmg = self._simulate_cvar_rollout(
                 first_action=acfg, first_zone=zid, horizon=horizon, n_samples=n_samples, alpha=alpha
             )
-
+                
             # Budget/trust-aware penalty: avoid actions you can't afford (debt hurts trust in step()).
             final_cost = float(acfg.cost)
             if self.budget < final_cost:
@@ -544,7 +567,7 @@ class GameSession:
         t_zh = {"industrial": "工業區", "residential": "住宅區", "lowland": "低窪區"}
         zone_label = t_zh.get(best_zone, "") if best_zone else ""
         worst_zone_label = t_zh.get(worst_zone, "") if worst_zone else ""
-
+        
         reasons = {
             "zh": {
                 "summary": f"以 CVaR(最差20%) 評估未來 {horizon} 小時最壞情境，選擇能降低尾端損失的行動。",
@@ -567,8 +590,8 @@ class GameSession:
         ]
 
         return Recommendation(
-            action=best_action,
-            zone_id=best_zone,
+            action=best_action, 
+            zone_id=best_zone, 
             reason=json.dumps(reasons, ensure_ascii=False),
             expected_loss=float(round(best_cvar, 2)),
             confidence=float(round(conf_val, 2)),
@@ -586,6 +609,27 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, 
 @app.get("/")
 def read_root():
     return {"status": "online", "message": "Flood Commander API is running. Visit port 3001 for the game UI."}
+
+# Vercel specific: handle the /api prefix that comes from rewrites
+@app.get("/api")
+def read_api_root():
+    return read_root()
+
+@app.get("/api/scenarios")
+def list_scenarios_api():
+    return list_scenarios()
+
+@app.post("/api/start")
+def start_game_api(req: StartRequest):
+    return start_game(req)
+
+@app.post("/api/step")
+def step_game_api(req: StepRequest):
+    return step_game(req)
+
+@app.get("/api/replay/{game_id}")
+def replay_api(game_id: str):
+    return replay(game_id)
 
 SCENARIOS = load_scenarios()
 RAINFALL: Dict[str, List[float]] = {sid: load_rain_series(spec.csv) for sid, spec in SCENARIOS.items()}
