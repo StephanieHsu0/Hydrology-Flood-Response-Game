@@ -5,7 +5,6 @@ import math
 import random
 import uuid
 import logging
-import joblib
 import numpy as np
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,9 +28,9 @@ MODEL_DIR = BASE_DIR / "code" / "model"
 if not MODEL_DIR.exists():
     MODEL_DIR = BASE_DIR / "model"
 
-# Load ML Surrogate Model
+# Load ML Surrogate Model Parameters (Numpy-only inference to stay under Vercel 250MB limit)
+ML_PARAMS = {}
 try:
-    # Try multiple possible locations for model files to support both local and Vercel environments
     possible_dirs = [
         MODEL_DIR,
         BASE_DIR / "model",
@@ -39,37 +38,47 @@ try:
         Path("/var/task/code/model") # Vercel specific
     ]
     
-    model_path = None
-    scaler_path = None
-    
+    weights_path = None
     for d in possible_dirs:
-        if (d / "surrogate_model.pkl").exists():
-            model_path = d / "surrogate_model.pkl"
-            scaler_path = d / "scaler.pkl"
-            logger.info(f"Found model at {d}")
+        if (d / "model_weights.npz").exists():
+            weights_path = d / "model_weights.npz"
+            logger.info(f"Found weights at {weights_path}")
             break
             
-    if model_path:
-        SURROGATE_MODEL = joblib.load(model_path)
-        SCALER = joblib.load(scaler_path)
-        logger.info("ML Surrogate Model loaded successfully.")
+    if weights_path:
+        with np.load(weights_path) as data:
+            ML_PARAMS = {k: data[k] for k in data.files}
+        logger.info("ML weights loaded successfully.")
     else:
-        logger.warning("No ML model artifacts found. Falling back to formula.")
-        SURROGATE_MODEL = None
-        SCALER = None
+        logger.warning("No ML weights found. Falling back to formula.")
 except Exception as e:
-    logger.error(f"Failed to load ML model: {e}")
-    SURROGATE_MODEL = None
-    SCALER = None
+    logger.error(f"Failed to load ML weights: {e}")
+
+def relu(x):
+    return np.maximum(0, x)
 
 def predict_next_storage(current_storage: float, rain: float, effect: float, params: ZoneParams) -> float:
-    """Predict next hour storage using ML model or fallback to formula."""
-    if SURROGATE_MODEL and SCALER:
-        # Features: current_storage, rain_now, action_effect, zone_a, zone_b, zone_c
-        features = np.array([[current_storage, rain, effect, params.a, params.b, params.c]])
-        features_scaled = SCALER.transform(features)
-        pred = SURROGATE_MODEL.predict(features_scaled)[0]
-        return max(float(pred), 0.0)
+    """Predict next hour storage using Numpy-only inference or fallback to formula."""
+    if ML_PARAMS:
+        try:
+            # 1. Feature preparation
+            x = np.array([current_storage, rain, effect, params.a, params.b, params.c])
+            
+            # 2. Scale features
+            x_scaled = (x - ML_PARAMS["scaler_mean"]) / ML_PARAMS["scaler_scale"]
+            
+            # 3. MLP Forward Pass (Manual inference to remove scikit-learn dependency)
+            # Input -> Hidden 1 (64)
+            h1 = relu(x_scaled @ ML_PARAMS["w_0"] + ML_PARAMS["b_0"])
+            # Hidden 1 -> Hidden 2 (32)
+            h2 = relu(h1 @ ML_PARAMS["w_1"] + ML_PARAMS["b_1"])
+            # Hidden 2 -> Output (1)
+            pred = h2 @ ML_PARAMS["w_2"] + ML_PARAMS["b_2"]
+            
+            return max(float(pred), 0.0)
+        except Exception as e:
+            # Silently fallback on inference error
+            return max(params.a * current_storage + params.b * rain - params.c * effect, 0.0)
     else:
         # Fallback to deterministic formula
         return max(params.a * current_storage + params.b * rain - params.c * effect, 0.0)

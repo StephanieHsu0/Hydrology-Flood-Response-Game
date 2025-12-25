@@ -9,6 +9,5 @@ __pycache__
 REPORT.md
 README.md
 *.pkl
-!code/model/surrogate_model.pkl
-!code/model/scaler.pkl
-
+code/model/export_weights.py
+!code/model/model_weights.npz

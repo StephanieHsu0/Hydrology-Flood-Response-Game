@@ -44,6 +44,13 @@ def train_model():
     joblib.dump(scaler, model_dir / "scaler.pkl")
     print(f"Model and scaler saved to {model_dir}")
 
+    # Export weights for Numpy-only inference (Vercel optimization)
+    weights = {f"w_{i}": w for i, w in enumerate(model.coefs_)}
+    biases = {f"b_{i}": b for i, b in enumerate(model.intercepts_)}
+    scaler_params = {"scaler_mean": scaler.mean_, "scaler_scale": scaler.scale_}
+    np.savez(model_dir / "model_weights.npz", **weights, **biases, **scaler_params)
+    print(f"Model weights exported to {model_dir / 'model_weights.npz'}")
+
 if __name__ == "__main__":
     train_model()
 
