@@ -663,7 +663,19 @@ def list_scenarios():
     global SCENARIOS, RAINFALL
     SCENARIOS = load_scenarios()
     RAINFALL = {sid: load_rain_series(spec.csv) for sid, spec in SCENARIOS.items()}
-    return [{"id": spec.id, "name": spec.name, "description": spec.description, "time_step_hr": spec.time_step_hr, "duration_steps": len(RAINFALL.get(spec.id, [])), "params": spec.params.dict(), "actions": {k: v.dict() for k, v in spec.actions.items()}} for spec in SCENARIOS.values()]
+    # Pydantic v2 compatible serialization
+    return [
+        {
+            "id": spec.id,
+            "name": spec.name,
+            "description": spec.description,
+            "time_step_hr": spec.time_step_hr,
+            "duration_steps": len(RAINFALL.get(spec.id, [])),
+            "params": spec.params.model_dump(),
+            "actions": {k: v.model_dump() for k, v in spec.actions.items()},
+        }
+        for spec in SCENARIOS.values()
+    ]
 
 @app.post("/start")
 def start_game(req: StartRequest):
